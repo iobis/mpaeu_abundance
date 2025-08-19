@@ -9,3 +9,7 @@ _Note: please, generate citation using [this tool](https://citation.doi.org/) to
 
 - https://mc-stan.org/docs/stan-users-guide/finite-mixtures.html#zero-inflated.section
 - https://m-clark.github.io/models-by-example/hurdle.html
+
+# Books
+
+- Rivoirard, J., Simmonds, J., Foote, K. G., Fernandes, P., & Bez, N. (2000). Geostatistics for Estimating Fish Abundance. Wiley. https://doi.org/10.1002/9780470757123
