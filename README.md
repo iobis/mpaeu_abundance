@@ -10,4 +10,4 @@ Target species:
 References are available in the [resources.md](resources.md) file.
 
 ## Data sources:
-- ICES survey data: [DATRAS trawl survey data] (https://datras.ices.dk/Data_products/Download/Download_Data_public.aspx) and [Acoustic/Pelagic survey data] (https://acoustic.ices.dk/submissions)
+- ICES survey data: [DATRAS trawl survey data](https://datras.ices.dk/Data_products/Download/Download_Data_public.aspx) and [Acoustic/Pelagic survey data](https://acoustic.ices.dk/submissions)
