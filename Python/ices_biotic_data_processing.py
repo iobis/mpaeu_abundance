@@ -106,5 +106,10 @@ cols_catch = ["HaulNumber", "CatchSpeciesCode", "CatchWeightUnit", "CatchSpecies
 # Merge between df_haul and df_catch (relation one to many) to pass the catch data into the haul data.
 df_complete = df_haul.merge(df_catch[cols_catch], on="HaulNumber", how="left")
 
+# Add haul center info:
+df_complete["HaulCenterLongitude"] = (df_complete["HaulStartLongitude"] + df_complete["HaulStopLongitude"]) / 2
+df_complete["HaulCenterLatitude"]  = (df_complete["HaulStartLatitude"]  + df_complete["HaulStopLatitude"])  / 2
+df_complete["HaulCenter"] = "POINT (" + df_complete["HaulCenterLatitude"].astype(str) + " " + df_complete["HaulCenterLongitude"].astype(str) + ")"
+
 df_complete.to_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic\merged_dataset.csv")
 
