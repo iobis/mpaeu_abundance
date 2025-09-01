@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 from typing import Dict, List, Union
+import geopandas as gpd
 
 def map_csv(
         folder_path: Union[str, Path],
@@ -59,4 +60,6 @@ def map_csv(
     return dict(sorted(result.items()))
 
 biotic_dict = map_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic")
+
+
 
