@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import Dict, List, Union
 import geopandas as gpd
+import pandas as pd
+from pyproj import Geod
 
 def map_csv(
         folder_path: Union[str, Path],
@@ -61,5 +63,31 @@ def map_csv(
 
 biotic_dict = map_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic")
 
+# Read the .csv skipping the first two rows
+df = pd.read_csv(biotic_dict[2020][0], skiprows=2)
 
+# Separate Haul info and Catch info:
+df_cruise = df.loc[df["Haul"].astype(str).str.strip().eq("Haul")].reset_index(drop=True)
+df_catch = df.loc[df["Haul"].astype(str).str.strip().eq("Catch")].reset_index(drop=True)
+
+# Haul Lat-Long column names:
+lat_long_cols = ["HaulStartLatitude","HaulStartLongitude","HaulStopLatitude","HaulStopLongitude"]
+
+# Secure that lat-long columns are numeric:
+for c in lat_long_cols:
+    df_cruise[c] = pd.to_numeric(df_cruise[c], errors="coerce")
+
+# Compute geodesic distance between HaulStart and End points (straight line):
+geod = Geod(ellps="WGS84")
+_, _, dist = geod.inv(
+    df_cruise["HaulStartLongitude"].to_numpy(),
+    df_cruise["HaulStartLatitude"].to_numpy(),
+    df_cruise["HaulStopLongitude"].to_numpy(),
+    df_cruise["HaulStopLatitude"].to_numpy(),
+)
+
+# Add a new column 'Distance' to the dataframe (in meters):
+df_cruise["Distance"] = dist
+
+print(df_cruise)
 
