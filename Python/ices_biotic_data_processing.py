@@ -172,7 +172,7 @@ def aggregate_ices_biotic_by_year(
 
     keys = ["HaulStationName", "CatchSpeciesCode"]
 
-    resultado: Dict[int, pd.DataFrame] = {}
+    result: Dict[int, pd.DataFrame] = {}
 
     for year in sorted(mapeo.keys()):
         frames = []
@@ -194,16 +194,19 @@ def aggregate_ices_biotic_by_year(
                     df_year["Distance"] = pd.to_numeric(df_year["Distance"], errors="coerce")
                     df_year["Abundance"] = df_year["CatchSpeciesCategoryWeight"]/df_year["Distance"]
                     df_year.drop(columns="HaulNumber", inplace=True)
-            resultado[year] = df_year
+            result[year] = df_year
 
 
-    return resultado
+    return result
 
 
 # Function to merge pd.Datafraes from the entire dictionary to obtain a single Dataframe:
-def merge_year_dfs(dfs_por_ano: Dict[int, pd.DataFrame]) -> pd.DataFrame:
+def merge_year_dfs(dfs_by_year: Dict[int, pd.DataFrame]) -> pd.DataFrame:
+    """
+    Concats all the pd.Dataframes that are in the dictionary retrieved by the function aggregate_ices_biotic_by_year() and returns a complete pd.Dataframe.
+    """
     frames = []
-    for year, df in dfs_por_ano.items():
+    for year, df in dfs_by_year.items():
         if df is None or df.empty:
             continue
         if "Year" not in df.columns:
