@@ -67,27 +67,44 @@ biotic_dict = map_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic")
 df = pd.read_csv(biotic_dict[2020][0], skiprows=2)
 
 # Separate Haul info and Catch info:
-df_cruise = df.loc[df["Haul"].astype(str).str.strip().eq("Haul")].reset_index(drop=True)
-df_catch = df.loc[df["Haul"].astype(str).str.strip().eq("Catch")].reset_index(drop=True)
+    # Haul:
+df_haul = df.loc[df["Haul"].astype(str).str.strip().eq("Haul")].reset_index(drop=True)  
+    # Catch: 
+catch_blk = df.loc[df["Haul"].astype(str).str.strip().eq("Catch")].reset_index(drop=True)   # Isolate catch block
+header = catch_blk.iloc[0, 2:].astype(str).str.strip()
+df_catch = catch_blk.iloc[1:, 2:].copy()
+df_catch.columns = header.values
+df_catch = df_catch.reset_index(drop=True)
+
 
 # Haul Lat-Long column names:
 lat_long_cols = ["HaulStartLatitude","HaulStartLongitude","HaulStopLatitude","HaulStopLongitude"]
 
 # Secure that lat-long columns are numeric:
 for c in lat_long_cols:
-    df_cruise[c] = pd.to_numeric(df_cruise[c], errors="coerce")
+    df_haul[c] = pd.to_numeric(df_haul[c], errors="coerce")
 
 # Compute geodesic distance between HaulStart and End points (straight line):
 geod = Geod(ellps="WGS84")
 _, _, dist = geod.inv(
-    df_cruise["HaulStartLongitude"].to_numpy(),
-    df_cruise["HaulStartLatitude"].to_numpy(),
-    df_cruise["HaulStopLongitude"].to_numpy(),
-    df_cruise["HaulStopLatitude"].to_numpy(),
+    df_haul["HaulStartLongitude"].to_numpy(),
+    df_haul["HaulStartLatitude"].to_numpy(),
+    df_haul["HaulStopLongitude"].to_numpy(),
+    df_haul["HaulStopLatitude"].to_numpy(),
 )
 
 # Add a new column 'Distance' to the dataframe (in meters):
-df_cruise["Distance"] = dist
+df_haul["Distance"] = dist
 
-print(df_cruise)
+# Secure column type:
+df_haul["HaulNumber"]  = pd.to_numeric(df_haul["HaulNumber"], errors="coerce").astype("Int64")
+df_catch["HaulNumber"] = pd.to_numeric(df_catch["HaulNumber"], errors="coerce").astype("Int64")
+
+# Columns to join:
+cols_catch = ["HaulNumber", "CatchSpeciesCode", "CatchWeightUnit", "CatchSpeciesCategoryWeight"]
+
+# Merge between df_haul and df_catch (relation one to many) to pass the catch data into the haul data.
+df_complete = df_haul.merge(df_catch[cols_catch], on="HaulNumber", how="left")
+
+df_complete.to_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic\merged_dataset.csv")
 
