@@ -111,5 +111,21 @@ df_complete["HaulCenterLongitude"] = (df_complete["HaulStartLongitude"] + df_com
 df_complete["HaulCenterLatitude"]  = (df_complete["HaulStartLatitude"]  + df_complete["HaulStopLatitude"])  / 2
 df_complete["HaulCenter"] = "POINT (" + df_complete["HaulCenterLatitude"].astype(str) + " " + df_complete["HaulCenterLongitude"].astype(str) + ")"
 
-df_complete.to_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic\merged_dataset.csv")
+# Key to unify dataset (each specie in each haul)
+keys = ["HaulNumber","CatchSpeciesCode"]
+
+# Columns to keep:
+keep_cols = ["HaulNumber", "HaulStationName", "HaulStartTime", "Distance", "CatchSpeciesCode", "CatchWeightUnit", "CatchSpeciesCategoryWeight", "HaulCenter"]
+
+# FFilter and drop duplicates
+df_per_species = (
+    df_complete.loc[df_complete["CatchSpeciesCode"].notna(), keep_cols]
+    .drop_duplicates(subset=keys, keep="first")
+    .reset_index(drop=True)
+)
+
+# Delete rows with Distance = 0 as they are wrong:
+df_per_species = df_per_species[df_per_species["Distance"].ne(0)].reset_index(drop=True)
+
+
 
