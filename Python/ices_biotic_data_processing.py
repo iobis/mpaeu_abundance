@@ -1,8 +1,6 @@
 # Code to preprocess ices biotic data from https://acoustic.ices.dk/submissions.
-import os
 from pathlib import Path
-from typing import Dict, List, Union, Iterable
-import geopandas as gpd
+from typing import Dict, List, Union
 import pandas as pd
 from pyproj import Geod
 
@@ -60,10 +58,6 @@ def map_csv(
 
     # Ordenar por año ascendente antes de devolver
     return dict(sorted(result.items()))
-
-biotic_dict = map_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic")
-
-print(biotic_dict)
 
 # Function to preprocess single ICES acoustic (biotic) csv and keep the needed info:
 def preprocess_ices_biotic_csv (
@@ -130,12 +124,14 @@ def preprocess_ices_biotic_csv (
     df_complete["HaulCenterLongitude"] = (df_complete["HaulStartLongitude"] + df_complete["HaulStopLongitude"]) / 2
     df_complete["HaulCenterLatitude"]  = (df_complete["HaulStartLatitude"]  + df_complete["HaulStopLatitude"])  / 2
     df_complete["HaulCenter"] = "POINT (" + df_complete["HaulCenterLatitude"].astype(str) + " " + df_complete["HaulCenterLongitude"].astype(str) + ")"
+    df_complete["HaulStart"] = "POINT (" + df_complete["HaulStartLatitude"].astype(str) + " " + df_complete["HaulStartLongitude"].astype(str) + ")"
+    df_complete["HaulStop"] = "POINT (" + df_complete["HaulStopLatitude"].astype(str) + " " + df_complete["HaulStopLongitude"].astype(str) + ")"
 
     # Key to unify dataset (each specie in each haul)
     keys = ["HaulNumber","CatchSpeciesCode"]
 
     # Columns to keep:
-    keep_cols = ["HaulNumber", "HaulStationName", "HaulStartTime", "Distance", "CatchSpeciesCode", "CatchWeightUnit", "CatchSpeciesCategoryWeight", "HaulCenter"]
+    keep_cols = ["HaulNumber", "HaulStationName", "HaulStartTime", "Distance", "CatchSpeciesCode", "CatchWeightUnit", "CatchSpeciesCategoryWeight", "HaulStart", "HaulStop", "HaulCenter"]
 
     # Filter and drop duplicates
     df_per_species = (
@@ -203,11 +199,23 @@ def aggregate_ices_biotic_by_year(
 
     return resultado
 
-aggregated_dict = aggregate_ices_biotic_by_year(biotic_dict)
-df_2020 = aggregated_dict.get(2020)
-df_2020.to_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic\aggregated.csv")
 
-# test = preprocess_ices_biotic_csv(biotic_dict[2020][0])
+# Function to merge pd.Datafraes from the entire dictionary to obtain a single Dataframe:
+def merge_year_dfs(dfs_por_ano: Dict[int, pd.DataFrame]) -> pd.DataFrame:
+    frames = []
+    for year, df in dfs_por_ano.items():
+        if df is None or df.empty:
+            continue
+        if "Year" not in df.columns:
+            df = df.copy()
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True)
+
+biotic_dict = map_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic")
+aggregated_dict = aggregate_ices_biotic_by_year(biotic_dict)
+full_df = merge_year_dfs(aggregated_dict)
+full_df.to_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic\full.csv")
+
 
 
 
