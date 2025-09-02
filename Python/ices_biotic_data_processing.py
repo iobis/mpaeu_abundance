@@ -214,10 +214,11 @@ def merge_year_dfs(dfs_by_year: Dict[int, pd.DataFrame]) -> pd.DataFrame:
         frames.append(df)
     return pd.concat(frames, ignore_index=True)
 
-biotic_dict = map_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic")
-aggregated_dict = aggregate_ices_biotic_by_year(biotic_dict)
-full_df = merge_year_dfs(aggregated_dict)
-full_df.to_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic\full.csv")
+# Use in Python - commenting to be able to import the function in R
+#biotic_dict = map_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic")
+#aggregated_dict = aggregate_ices_biotic_by_year(biotic_dict)
+#full_df = merge_year_dfs(aggregated_dict)
+#full_df.to_csv(r"C:\Users\beñat.egidazu\Desktop\Tests\ICES_Acoustic\full.csv")
 
 
 

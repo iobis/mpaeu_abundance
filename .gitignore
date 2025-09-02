@@ -48,5 +48,6 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-raw-data/
+data-raw/
 data/
+*DS_store
