@@ -123,9 +123,9 @@ def preprocess_ices_biotic_csv (
     # Add haul center info:
     df_complete["HaulCenterLongitude"] = (df_complete["HaulStartLongitude"] + df_complete["HaulStopLongitude"]) / 2
     df_complete["HaulCenterLatitude"]  = (df_complete["HaulStartLatitude"]  + df_complete["HaulStopLatitude"])  / 2
-    df_complete["HaulCenter"] = "POINT (" + df_complete["HaulCenterLatitude"].astype(str) + " " + df_complete["HaulCenterLongitude"].astype(str) + ")"
-    df_complete["HaulStart"] = "POINT (" + df_complete["HaulStartLatitude"].astype(str) + " " + df_complete["HaulStartLongitude"].astype(str) + ")"
-    df_complete["HaulStop"] = "POINT (" + df_complete["HaulStopLatitude"].astype(str) + " " + df_complete["HaulStopLongitude"].astype(str) + ")"
+    df_complete["HaulCenter"] = "POINT (" + df_complete["HaulCenterLongitude"].astype(str) + " " + df_complete["HaulCenterLatitude"].astype(str) + ")"
+    df_complete["HaulStart"] = "POINT (" + df_complete["HaulStartLongitude"].astype(str) + " " + df_complete["HaulStartLatitude"].astype(str) + ")"
+    df_complete["HaulStop"] = "POINT (" + df_complete["HaulStopLongitude"].astype(str) + " " + df_complete["HaulStopLatitude"].astype(str) + ")"
 
     # Key to unify dataset (each specie in each haul)
     keys = ["HaulNumber","CatchSpeciesCode"]
