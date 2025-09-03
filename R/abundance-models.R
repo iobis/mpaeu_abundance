@@ -58,6 +58,7 @@ enen_data <- enen_data[,-length(enen_data)]
 
 enen_pt_env <- bind_cols(enen_points, enen_data_st)
 
+# There seems to be an outlier, removing for now, but to think about
 enen_pt_env <- enen_pt_env[which(
     enen_pt_env$abundance < quantile(enen_pt_env$abundance, .99)
 ),]
