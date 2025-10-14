@@ -1,5 +1,6 @@
 --find-links wheels
 GDAL==3.4.3
 
+copernicusmarine=2.2.2
 fiona==1.10.1
 geopandas==1.0.1

@@ -51,3 +51,31 @@ rsconnect/
 data-raw/
 data/
 *DS_store
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+*/.venv/
+*/venv/
+
+# Caches and compilations
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Builds 
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE/OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
