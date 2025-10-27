@@ -4,7 +4,7 @@ import getpass
 import copernicusmarine
 
 # Work directory
-out_dir = r'path'
+out_dir = r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Raw\Daily'
 os.chdir(out_dir)
 
 # Copernicus Marine Credentials 
@@ -13,7 +13,7 @@ PASSWORD = getpass.getpass("Enter your password: ")
 copernicusmarine.login( username = USERNAME, password = PASSWORD)
 
 # Uncomment this to download Sea Surface Temperature, Salinity & Sea Water Velocity in the study area:
-productID = "cmems_mod_ibi_phy_my_0.083deg-3D_P1Y-m" 
+productID = "cmems_mod_ibi_phy_my_0.083deg-3D_P1D-m" 
 lon = (-19.08, 5.08)
 lat = (26 , 56.08)
 variables = ["uo", "vo", "so", "thetao"]
@@ -26,7 +26,7 @@ max_depth = 1
 
 
 # # Uncomment this to download Dissolved Oxygen in the study area:
-# productID = "cmems_mod_ibi_bgc_my_0.083deg-3D_P1Y-m" 
+# productID = "cmems_mod_ibi_bgc_my_0.083deg-3D_P1D-m" 
 # lon = (-19.08, 5.08)
 # lat = (26 , 56.08)
 # variables = ["o2"]
