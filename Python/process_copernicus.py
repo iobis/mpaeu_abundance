@@ -5,14 +5,6 @@ import pandas as pd
 import numpy as np
 from time import time
 
-# Inputs:
-input_file = r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Raw\Daily\Physical_1993_1_1_to_1999_12_31.nc'
-env_epsg = 4326  # WGS84
-
-# Load dataset
-ds = xr.open_dataset(input_file)
-print(ds)
-
 # Class with functions to process Copernicus data:
 class CopernicusProcessor:
     def __init__(self, dataset: xr.Dataset, epsg: int):
@@ -64,10 +56,58 @@ class CopernicusProcessor:
         
         return mean_range
     
+    def get_max(self, variable_name: str) -> xr.DataArray:
+
+        """
+        Calculates the maximum value from the netcdf (decade). Bio-Oracle logic.
+
+        Args:
+            variable_name (str): Name of the variable in dataset
+        
+        Returns:
+            xr.DataArray: Raster with the maximum value in each cell (Bio-Oracle Maximum).
+        """
+
+        # Get the variable data:
+        data = self.get_variable_data(variable_name)
+
+        # Return the maximum value across the time dimension:
+        return data.max(dim='time')
+    
+    def get_min(self, variable_name: str) -> xr.DataArray:
+
+        """
+        Calculates the minimum value from the netcdf (decade). Bio-Oracle logic.
+
+        Args:
+            variable_name (str): Name of the variable in dataset
+        
+        Returns:
+            xr.DataArray: Raster with the minimum value in each cell (Bio-Oracle Maximum).
+        """
+
+        # Get the variable data:
+        data = self.get_variable_data(variable_name)
+
+        # Return the maximum value across the time dimension:
+        return data.min(dim='time')
+
+
+# Inputs:
+input_file = r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Raw\Daily\Physical_1993_1_1_to_1999_12_31.nc'
+env_epsg = 4326  # WGS84
+
+# Load dataset
+ds = xr.open_dataset(input_file)
+
 # Example usage:
 processor = CopernicusProcessor(ds, env_epsg)
-thetao_range = processor.get_range('thetao')  # Example for Sea Surface Temperature
-print(thetao_range)
+# thetao_range = processor.get_range('thetao')  # Example for Sea Surface Temperature
+# print(thetao_range)
+
+thethao_max = processor.get_max("thetao")
+thethao_min = processor.get_min("thetao")
 
 # Optional: Save as netCDF
-thetao_range.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_mean_range.nc')
+thethao_max.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_max_test.nc')
+thethao_min.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_min_test.nc')
