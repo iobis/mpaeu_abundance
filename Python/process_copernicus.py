@@ -4,6 +4,7 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from time import time
+import rioxarray
 
 # Class with functions to process Copernicus data:
 class CopernicusProcessor:
@@ -89,12 +90,64 @@ class CopernicusProcessor:
         # Get the variable data:
         data = self.get_variable_data(variable_name)
 
-        # Return the maximum value across the time dimension:
+        # Return the minimum value across the time dimension:
         return data.min(dim='time')
+    
+    def dataarray_to_geotiff(self, da: xr.DataArray, out_path: str,
+                                    nodata: float = None, dtype: str = None,
+                                    compress: str = "DEFLATE") -> str:
+        """
+        Writes and xr.DataArray 2D to GeoTIFF.
+
+        Args:
+            da (xr.DataArray): DataArray to write. 
+            out_path (str): Output file path.
+            nodata (float, optional): NoData value to set in the GeoTIFF.
+            dtype (str, optional): Data type for the output GeoTIFF.
+            compress (str, optional): Compression method for the GeoTIFF. Defaults to "DEFLATE".
+
+        Returns:
+            GeoTIFF file in the out_path.
+        """
+        # Colapse time dimension if exists
+        if 'time' in da.dims:
+            da = da.squeeze('time', drop=True)
+
+        # Detect spatial dimensions
+        x_dim = next((n for n in ['x', 'lon', 'longitude'] if n in da.dims), None)
+        y_dim = next((n for n in ['y', 'lat', 'latitude'] if n in da.dims), None)
+        if x_dim is None or y_dim is None:
+            raise ValueError("No se encontraron dimensiones espaciales ('lon'/'lat' o 'x'/'y').")
+
+        # Rename to x/y if needed:
+        if (x_dim, y_dim) != ('x', 'y'):
+            da = da.rename({x_dim: 'x', y_dim: 'y'})
+
+        # Ensure rioxarray 'knows' spatial dimensions
+        da = da.rio.set_spatial_dims(x_dim='x', y_dim='y', inplace=False)
+
+        # If it has no CRS write it from self.epsg
+        try:
+            has_crs = da.rio.crs is not None
+        except Exception:
+            has_crs = False
+
+        if not has_crs:
+            da = da.rio.write_crs(f"EPSG:{self.epsg}", inplace=False)
+
+        # Prepare kargs and write the GeoTIFF
+        write_kwargs = {"driver": "GTiff", "compress": compress}
+        if dtype is not None:
+            write_kwargs["dtype"] = dtype
+        if nodata is not None:
+            write_kwargs["nodata"] = nodata
+
+        da.rio.to_raster(out_path, **write_kwargs)
+        return out_path
 
 
 # Inputs:
-input_file = r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Raw\Daily\Physical_1993_1_1_to_1999_12_31.nc'
+input_file = r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Raw\Daily\1993_2000\Physical_1993_1_1_to_1999_12_31.nc'
 env_epsg = 4326  # WGS84
 
 # Load dataset
@@ -108,6 +161,12 @@ processor = CopernicusProcessor(ds, env_epsg)
 thethao_max = processor.get_max("thetao")
 thethao_min = processor.get_min("thetao")
 
+print("Max and Min calculated.")
+
+processor.dataarray_to_geotiff(thethao_max, r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_max_test.tif', nodata=-9999, dtype='float32')
+
+print("Max GeoTIFF saved.")
+
 # Optional: Save as netCDF
-thethao_max.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_max_test.nc')
-thethao_min.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_min_test.nc')
+# thethao_max.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_max_test.nc')
+# thethao_min.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_min_test.nc')
