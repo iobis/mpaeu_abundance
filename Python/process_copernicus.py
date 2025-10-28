@@ -4,13 +4,29 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from time import time
+
+# Ensure PROJ_LIB is set for rioxarray/rasterio
+try:
+    import pyproj
+    proj_dir = pyproj.datadir.get_data_dir()
+    if proj_dir and os.path.isdir(proj_dir):
+        os.environ["PROJ_LIB"] = proj_dir
+    else:
+        proj_dir = None
+except Exception:
+    proj_dir = None
+
+if proj_dir is None:
+    print("Warning: PROJ data dir not detected by pyproj. If rioxarray/rasterio falla, set PROJ_LIB to your pyproj data dir.")
+
 import rioxarray
 
 # Class with functions to process Copernicus data:
 class CopernicusProcessor:
-    def __init__(self, dataset: xr.Dataset, epsg: int):
+    def __init__(self, dataset: xr.Dataset, epsg: int, var_map: dict = None):
         self.dataset = dataset
         self.epsg = epsg
+        self.var_map = var_map or {}
 
     def get_variable_data(self, variable_name: str) -> xr.DataArray:
         if variable_name in self.dataset:
@@ -93,7 +109,7 @@ class CopernicusProcessor:
         # Return the minimum value across the time dimension:
         return data.min(dim='time')
     
-    def dataarray_to_geotiff(self, da: xr.DataArray, out_path: str,
+    def dataarray_to_geotiff(self, da: xr.DataArray, variable_key: str, out_dir: str,
                                     nodata: float = None, dtype: str = None,
                                     compress: str = "DEFLATE") -> str:
         """
@@ -109,6 +125,16 @@ class CopernicusProcessor:
         Returns:
             GeoTIFF file in the out_path.
         """
+
+        mapped = self.var_map.get(variable_key, variable_key)
+
+        # Ensure variable name:
+        try:
+            da = da.copy()
+            da.name = mapped
+        except Exception:
+            pass
+
         # Colapse time dimension if exists
         if 'time' in da.dims:
             da = da.squeeze('time', drop=True)
@@ -142,30 +168,71 @@ class CopernicusProcessor:
         if nodata is not None:
             write_kwargs["nodata"] = nodata
 
+        # Map output path:
+        out_path = os.path.join(out_dir, f"{mapped}.tif")
         da.rio.to_raster(out_path, **write_kwargs)
         return out_path
+    
+    def speed_from_components(self, u_component: str, v_component: str) -> xr.DataArray:
+        """
+        Calculate speed from u and v components.
+
+        Args:
+            u_component (str): Name of the u component variable in dataset.
+            v_component (str): Name of the v component variable in dataset.
+
+        Returns: 
+            xr.DataArray: DataArray with calculated speed.
+        """
+
+        # Get components and compute product speed:
+        self_u = self.get_variable_data(u_component)
+        self_v = self.get_variable_data(v_component) 
+        speed = xr.ufuncs.sqrt(self_u**2 + self_v**2)  
+        
+        # Give a name to the product:
+        speed.name = 'V'
+
+        # Add to dataset:
+        self.dataset['V'] = speed
+        
+        return self.dataset
+
+# Copernicus Environmental Variables Dictionary:
+var_map = {
+    'thetao': 'sea_temperature',
+    'so': 'salinity',
+    'o2': 'oxygen',
+    'V': "current_speed"}
 
 
+
+
+# ---------------------------- TESTING -----------------------------
 # Inputs:
 input_file = r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Raw\Daily\1993_2000\Physical_1993_1_1_to_1999_12_31.nc'
 env_epsg = 4326  # WGS84
 
 # Load dataset
 ds = xr.open_dataset(input_file)
+print(ds)
 
-# Example usage:
-processor = CopernicusProcessor(ds, env_epsg)
-# thetao_range = processor.get_range('thetao')  # Example for Sea Surface Temperature
-# print(thetao_range)
+# # Example usage:
+processor = CopernicusProcessor(ds, env_epsg, var_map=var_map)
+# # thetao_range = processor.get_range('thetao')  # Example for Sea Surface Temperature
+# # print(thetao_range)
 
-thethao_max = processor.get_max("thetao")
-thethao_min = processor.get_min("thetao")
+current_netcdf = processor.speed_from_components('uo', 'vo')
+current_netcdf.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\current_speed_test.nc')
 
-print("Max and Min calculated.")
+current_max = processor.get_max("V")
+# thethao_min = processor.get_min("thetao")
 
-processor.dataarray_to_geotiff(thethao_max, r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_max_test.tif', nodata=-9999, dtype='float32')
+# print("Max and Min calculated.")
 
-print("Max GeoTIFF saved.")
+processor.dataarray_to_geotiff(da= current_max,  variable_key="V", out_dir= r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests', nodata=-9999, dtype='float32')
+
+# print("Max GeoTIFF saved.")
 
 # Optional: Save as netCDF
 # thethao_max.to_netcdf(r'C:\Users\beñat.egidazu\Desktop\PhD\Papers\Fisheries_2\Data_nca\Environmental_data_copernicus\Tests\thetao_max_test.nc')
